@@ -6,6 +6,16 @@
     "GEMINI_API_KEY": "@gemini_api_key",
     "VITE_APP_ENV": "production"
   },
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/index.html"
+    }
+  ],
   "functions": {
     "api/**/*.ts": {
       "runtime": "@vercel/node@3.3.4"
