@@ -1,0 +1,82 @@
+
+> emoji-math-whiz@0.0.0 test:all
+> npm run test:coverage && npm run test:e2e
+
+
+> emoji-math-whiz@0.0.0 test:coverage
+> jest --coverage
+
+ts-jest[ts-jest-transformer] (WARN) Define `ts-jest` config under `globals` is deprecated. Please do
+transform: {
+    <transform_regex>: ['ts-jest', { /* ts-jest config goes here in Jest */ }],
+},
+See more at https://kulshekhar.github.io/ts-jest/docs/getting-started/presets#advanced
+ts-jest[ts-jest-transformer] (WARN) Define `ts-jest` config under `globals` is deprecated. Please do
+transform: {
+    <transform_regex>: ['ts-jest', { /* ts-jest config goes here in Jest */ }],
+},
+See more at https://kulshekhar.github.io/ts-jest/docs/getting-started/presets#advanced
+ts-jest[config] (WARN) 
+    The "ts-jest" config option "isolatedModules" is deprecated and will be removed in v30.0.0. Please use "isolatedModules: true" in /Users/charlie/Downloads/emoji-math-whiz/tsconfig.json instead, see https://www.typescriptlang.org/tsconfig/#isolatedModules
+  
+ts-jest[config] (WARN) 
+    The "ts-jest" config option "isolatedModules" is deprecated and will be removed in v30.0.0. Please use "isolatedModules: true" in /Users/charlie/Downloads/emoji-math-whiz/tsconfig.json instead, see https://www.typescriptlang.org/tsconfig/#isolatedModules
+  
+ts-jest[ts-jest-transformer] (WARN) Define `ts-jest` config under `globals` is deprecated. Please do
+transform: {
+    <transform_regex>: ['ts-jest', { /* ts-jest config goes here in Jest */ }],
+},
+See more at https://kulshekhar.github.io/ts-jest/docs/getting-started/presets#advanced
+ts-jest[config] (WARN) 
+    The "ts-jest" config option "isolatedModules" is deprecated and will be removed in v30.0.0. Please use "isolatedModules: true" in /Users/charlie/Downloads/emoji-math-whiz/tsconfig.json instead, see https://www.typescriptlang.org/tsconfig/#isolatedModules
+  
+PASS __tests__/integration/persistence.test.ts
+FAIL __tests__/types.test.ts
+  ● Test suite failed to run
+
+    Cannot find module '../../types' from '__tests__/types.test.ts'
+
+    > 1 | import { Operator, MathProblem, ProblemType, UserStats } from '../../types';
+        | ^
+      2 |
+      3 | describe('Types', () => {
+      4 |   describe('Operator enum', () => {
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.<anonymous> (__tests__/types.test.ts:1:1)
+
+PASS __tests__/unit/dataStructures.test.ts
+PASS __tests__/services/audioService.test.ts
+FAIL e2e/app.spec.ts
+  ● Test suite failed to run
+
+    ReferenceError: TransformStream is not defined
+
+    > 1 | import { test, expect } from '@playwright/test';
+        | ^
+      2 |
+      3 | test.describe('Emoji Math Whiz - E2E Tests', () => {
+      4 |   test.beforeEach(async ({ page }) => {
+
+      at Object.<anonymous> (node_modules/playwright/lib/mcpBundleImpl.js:17:5390)
+      at Object.<anonymous> (node_modules/playwright/lib/mcp/sdk/bundle.js:48:22)
+      at Object.<anonymous> (node_modules/playwright/lib/mcp/sdk/proxyBackend.js:35:25)
+      at Object.<anonymous> (node_modules/playwright/lib/mcp/sdk/exports.js:19:29)
+      at Object.<anonymous> (node_modules/playwright/lib/mcp/test/browserBackend.js:34:19)
+      at Object.<anonymous> (node_modules/playwright/lib/index.js:45:29)
+      at Object.<anonymous> (node_modules/playwright/test.js:17:13)
+      at Object.<anonymous> (node_modules/@playwright/test/index.js:17:18)
+      at Object.<anonymous> (e2e/app.spec.ts:1:1)
+
+------------------|---------|----------|---------|---------|-------------------
+File              | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+------------------|---------|----------|---------|---------|-------------------
+All files         |   27.27 |    13.51 |      25 |   30.52 |                   
+ audioService.ts  |   93.75 |     62.5 |     100 |   93.54 | 7,51              
+ geminiService.ts |       0 |        0 |       0 |       0 | 2-184             
+------------------|---------|----------|---------|---------|-------------------
+Test Suites: 2 failed, 3 passed, 5 total
+Tests:       23 passed, 23 total
+Snapshots:   0 total
+Time:        8.833 s
+Ran all test suites.

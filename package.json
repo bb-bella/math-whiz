@@ -1,0 +1,37 @@
+{
+  "name": "math-whiz",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test",
+    "test:all": "npm run test:coverage && npm run test:e2e"
+  },
+  "dependencies": {
+    "canvas-confetti": "^1.9.4",
+    "@google/genai": "^1.30.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "lucide-react": "^0.554.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.1.5",
+    "@testing-library/react": "^15.0.0",
+    "@testing-library/user-event": "^14.5.1",
+    "@types/jest": "^29.5.11",
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "@playwright/test": "^1.40.1",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}

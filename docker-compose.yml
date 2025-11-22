@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  math-whiz:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: math-whiz-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - API_KEY=${API_KEY:-}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache
+    networks:
+      - math-whiz-network
+
+networks:
+  math-whiz-network:
+    driver: bridge
