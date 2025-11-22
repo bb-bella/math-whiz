@@ -1,10 +1,14 @@
 {
-  "name": "math-whiz-isabella-app",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "installCommand": "npm install --omit=dev",
+  "devCommand": "npm run dev",
   "env": {
     "GEMINI_API_KEY": "@gemini_api_key",
     "VITE_APP_ENV": "production"
+  },
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "@vercel/node@3.3.4"
+    }
   }
 }
