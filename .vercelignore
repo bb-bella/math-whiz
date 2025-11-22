@@ -1,0 +1,12 @@
+.git
+.gitignore
+README.md
+node_modules
+.env.local
+.DS_Store
+coverage
+dist
+fly.toml
+Dockerfile
+docker-compose.yml
+.dockerignore
