@@ -1,67 +1,43 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
 import { MathProblem, Operator, ProblemType, UserStats, AppSettings } from "../types";
-import { config } from "./config";
 import { errorHandler } from "./errorHandler";
 
-const getClient = () => {
-  const apiKey = config.apiKey;
-  if (!apiKey) {
-    errorHandler.log(
-      "API Key not configured. Using local problem generation.",
-      "info",
-      "gemini-service"
-    );
-    return null;
-  }
+// Call the serverless Gemini API
+const callGeminiAPI = async (prompt: string, model: string = 'gemini-pro'): Promise<string> => {
   try {
-    return new GoogleGenAI({ apiKey });
+    const response = await fetch("/api/gemini", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, model }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.response;
   } catch (error) {
-    errorHandler.log(
-      "Failed to initialize Gemini client",
-      "error",
-      "gemini-service",
-      error
-    );
-    return null;
+    console.error("Gemini API call failed:", error);
+    throw error;
   }
 };
 
 // Generate a specific hint for a problem with contextual guidance
 export const getMathHint = async (problem: MathProblem): Promise<string> => {
-  const client = getClient();
-  
-  // If no API key, use fallback hints immediately
-  if (!client) {
-    const fallbackHints: Record<ProblemType, string> = {
-      'arithmetic': 'Look at the numbers again. Do you need to add, subtract, multiply, or divide? You can do this! 🔢',
-      'geometry': 'Count the sides, corners, or edges carefully. What shape is it? 📏',
-      'fraction': 'Imagine cutting something into pieces. How many pieces total? How many are you using? 🍰',
-      'logic': 'Look for patterns! What repeats? What changes? You\'re getting it! 🧩',
-      'measurement': 'Compare the sizes or numbers. Which is more? Which is less? 📏',
-      'riddle': 'Re-read the riddle carefully. What is each word telling you? Think step by step! 🧩',
-      'word': 'What do the words mean? Is it altogether, left over, or each? 💭',
-      'time': 'Look at the clock. Where do the hands point? Count carefully! 🕒',
-      'sequence': 'What changes between the numbers? More? Less? Double? Half? 🔢'
-    };
-    return fallbackHints[problem.type] || "Believe in yourself! Take your time! 🚀";
-  }
+  const fallbackHints: Record<ProblemType, string> = {
+    'arithmetic': 'Look at the numbers again. Do you need to add, subtract, multiply, or divide? You can do this! 🔢',
+    'geometry': 'Count the sides, corners, or edges carefully. What shape is it? 📏',
+    'fraction': 'Imagine cutting something into pieces. How many pieces total? How many are you using? 🍰',
+    'logic': 'Look for patterns! What repeats? What changes? You\'re getting it! 🧩',
+    'measurement': 'Compare the sizes or numbers. Which is more? Which is less? 📏',
+    'riddle': 'Re-read the riddle carefully. What is each word telling you? Think step by step! 🧩',
+    'word': 'What do the words mean? Is it altogether, left over, or each? 💭',
+    'time': 'Look at the clock. Where do the hands point? Count carefully! 🕒',
+    'sequence': 'What changes between the numbers? More? Less? Double? Half? 🔢'
+  };
 
   try {
-    
-    // Generate contextual hints based on problem type
-    const contextualGuides: Record<ProblemType, string> = {
-      'arithmetic': 'Break the problem into smaller steps. What comes first?',
-      'geometry': 'Count the sides, corners, or edges. What shape do you see?',
-      'fraction': 'Think of a pizza or pie. How many pieces? How many are you taking?',
-      'logic': 'Look for patterns. What emoji repeats? What changes?',
-      'measurement': 'Compare the numbers. Which is bigger? What unit are we using?',
-      'riddle': 'Read the clues carefully. Think about what each word means.',
-      'word': 'Turn the words into numbers. What operation goes with "altogether", "left", "each"?',
-      'time': 'Use a clock. Where is the hour hand? The minute hand? Count up or down.',
-      'sequence': 'Look at what changes between numbers. Add? Subtract? Double?'
-    };
-    
     const prompt = `
       You are a super enthusiastic, emoji-loving "Math Cheerleader" for a child learning math.
       
@@ -85,26 +61,10 @@ export const getMathHint = async (problem: MathProblem): Promise<string> => {
       5. Max 3 sentences total.
     `;
 
-    const response = await client.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
-
-    return response.text || `Here's a tip: ${contextualGuides[problem.type]} Keep going! 🌟`;
+    const response = await callGeminiAPI(prompt);
+    return response || fallbackHints[problem.type];
   } catch (error) {
     console.error("Error fetching hint:", error);
-    // Enhanced fallback hints with context
-    const fallbackHints: Record<ProblemType, string> = {
-      'arithmetic': 'Look at the numbers again. Do you need to add, subtract, multiply, or divide? You can do this! 🔢',
-      'geometry': 'Count the sides, corners, or edges carefully. What shape is it? 📏',
-      'fraction': 'Imagine cutting something into pieces. How many pieces total? How many are you using? 🍰',
-      'logic': 'Look for patterns! What repeats? What changes? You\'re getting it! 🧩',
-      'measurement': 'Compare the sizes or numbers. Which is more? Which is less? 📏',
-      'riddle': 'Re-read the riddle carefully. What is each word telling you? Think step by step! 🧩',
-      'word': 'What do the words mean? Is it altogether, left over, or each? 💭',
-      'time': 'Look at the clock. Where do the hands point? Count carefully! 🕒',
-      'sequence': 'What changes between the numbers? More? Less? Double? Half? 🔢'
-    };
     return fallbackHints[problem.type] || "Believe in yourself! Take your time! 🚀";
   }
 };
@@ -114,15 +74,7 @@ export const generateAIProblem = async (
   settings: AppSettings, 
   stats: UserStats
 ): Promise<MathProblem> => {
-  const client = getClient();
-  
-  // If no API key, use local generation immediately
-  if (!client) {
-    return generateLocalProblem(settings.difficulty);
-  }
-
   try {
-    
     const globalDiff = settings.difficulty;
     const topicDiffMap = settings.topicDifficulty || {};
     const topicDiffString = JSON.stringify(topicDiffMap);
@@ -161,7 +113,6 @@ export const generateAIProblem = async (
     const topicAcc = stats.topicAccuracy || {};
     const weakTopics = Object.entries(topicAcc)
       .filter(([topic, data]) => {
-        // Only consider weak topics if they're in the allowed list
         const d = data as { correct: number; total: number };
         return allowedTopics.includes(topic) && d.total > 2 && (d.correct / d.total) < 0.5;
       })
@@ -221,41 +172,22 @@ export const generateAIProblem = async (
       }
     `;
 
-    const response = await client.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: `Generate a math problem. ${adaptiveNote}`,
-      config: {
-        systemInstruction: systemInstruction,
-        responseMimeType: "application/json",
-        responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-                questionText: { type: Type.STRING },
-                answer: { type: Type.NUMBER },
-                type: { type: Type.STRING, enum: ["arithmetic", "word", "sequence", "time", "geometry", "fraction", "logic", "measurement", "riddle"] },
-                displayMode: { type: Type.STRING, enum: ["standard", "text"] },
-                num1: { type: Type.NUMBER },
-                num2: { type: Type.NUMBER },
-                operator: { type: Type.STRING, enum: ["+", "-", "*", "/"] },
-                difficultyLevel: { type: Type.STRING }
-            },
-            required: ["questionText", "answer", "type", "displayMode"]
-        }
-      }
-    });
+    const prompt = `Generate a math problem. ${adaptiveNote}\n\n${systemInstruction}`;
 
-    let text = response.text;
-    if (!text) throw new Error("No response from AI");
+    const response = await callGeminiAPI(prompt, 'gemini-pro');
+    
+    if (!response) throw new Error("No response from API");
 
     // Robust JSON Extraction
-    const jsonStartIndex = text.indexOf('{');
-    const jsonEndIndex = text.lastIndexOf('}');
+    let jsonText = response;
+    const jsonStartIndex = jsonText.indexOf('{');
+    const jsonEndIndex = jsonText.lastIndexOf('}');
     
     if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
-        text = text.substring(jsonStartIndex, jsonEndIndex + 1);
+      jsonText = jsonText.substring(jsonStartIndex, jsonEndIndex + 1);
     }
     
-    const data = JSON.parse(text);
+    const data = JSON.parse(jsonText);
 
     return {
       id: Date.now().toString(),
