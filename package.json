@@ -16,7 +16,6 @@
   "dependencies": {
     "canvas-confetti": "^1.9.4",
     "@google/generative-ai": "^0.21.0",
-    "@vercel/node": "^3.3.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "lucide-react": "^0.554.0"
