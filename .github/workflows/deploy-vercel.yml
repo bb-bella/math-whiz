@@ -22,33 +22,33 @@ jobs:
     - name: Ensure API directory exists
       run: mkdir -p api
 
-    - name: Generate Vercel Serverless Gemini API Route
+    - name: Generate Vercel Serverless Gemini API Route (JavaScript, not TS)
       run: |
-        cat > api/gemini.ts << 'EOFAPI'
-        import { VercelRequest, VercelResponse } from '@vercel/node';
-        import { GoogleGenerativeAI } from '@google/generative-ai';
+        cat > api/gemini.js << 'EOFAPI'
+        import { GoogleGenerativeAI } from "@google/generative-ai";
 
-        export default async function handler(req: VercelRequest, res: VercelResponse) {
-          if (req.method !== 'POST') {
-            return res.status(405).json({ error: 'Method Not Allowed' });
-          }
-
+        export default async function handler(req, res) {
           try {
-            const { prompt, model = 'gemini-pro' } = req.body;
-
-            if (!prompt) {
-              return res.status(400).json({ error: 'Missing prompt' });
+            if (req.method !== "POST") {
+              return res.status(405).json({ error: "Method Not Allowed" });
             }
 
-            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+            const { prompt, model = "gemini-pro" } = req.body;
+
+            if (!prompt) {
+              return res.status(400).json({ error: "Missing prompt" });
+            }
+
+            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
             const geminiModel = genAI.getGenerativeModel({ model });
+
             const result = await geminiModel.generateContent(prompt);
             const response = result.response.text();
 
             return res.status(200).json({ response });
           } catch (error) {
-            console.error('Gemini API Error:', error);
-            return res.status(500).json({ error: 'Internal Server Error' });
+            console.error("Gemini API Error:", error);
+            return res.status(500).json({ error: "Internal Server Error" });
           }
         }
         EOFAPI
