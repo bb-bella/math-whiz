@@ -3,125 +3,126 @@ name: Deploy to Vercel (Auto Bootstrap)
 on:
   push:
     branches:
-      - main
+    - main
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: npm
 
-      ######################################################################
-      # 1. AUTO-BOOTSTRAP YOUR PROJECT (CI WILL PATCH YOUR REPO)
-      ######################################################################
+    ######################################################################
+    # 1. AUTO-BOOTSTRAP THE PROJECT FOR VERCEL
+    ######################################################################
 
-      - name: Create /api directory
-        run: mkdir -p api
+    - name: Ensure API directory exists
+      run: mkdir -p api
 
-      - name: Remove backend server files
-        run: |
-          rm -f server.js || true
-          rm -f index.js || true
-          rm -f app.js || true
+    - name: Remove incompatible backend servers
+      run: |
+        rm -f server.js || true
+        rm -f app.js || true
+        rm -f index.js || true
 
-      - name: Remove Express/Koa references
-        run: |
-          grep -rl "express" . | xargs rm -f || true
-          grep -rl "koa" . | xargs rm -f || true
+    - name: Remove Express/Koa remnants
+      run: |
+        grep -rl "express" . | xargs rm -f || true
+        grep -rl "koa" . | xargs rm -f || true
 
-      - name: Create Vercel Gemini API Route
-        run: |
-          mkdir -p api
-          cat > api/gemini.js << 'EOFAPI'
-          import { GoogleGenerativeAI } from "@google/generative-ai";
-          
-          export default async function handler(req, res) {
-            try {
-              if (req.method !== "POST") {
-                return res.status(405).json({ error: "Method Not Allowed" });
-              }
-          
-              const { question } = req.body;
-          
-              if (!question) {
-                return res.status(400).json({ error: "Missing question" });
-              }
-          
-              const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-              const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-          
-              const result = await model.generateContent(question);
-              const text = result.response.text();
-          
-              return res.status(200).json({ response: text });
-            } catch (err) {
-              console.error("API ERROR:", err);
-              return res.status(500).json({ error: "Internal Server Error" });
+    - name: Generate Vercel Serverless Gemini API Route
+      run: |
+        mkdir -p api
+        cat > api/gemini.js << 'EOFAPI'
+        import { GoogleGenerativeAI } from "@google/generative-ai";
+
+        export default async function handler(req, res) {
+          try {
+            if (req.method !== "POST") {
+              return res.status(405).json({ error: "Method Not Allowed" });
             }
-          }
-          EOFAPI
 
-      - name: Rewrite Gemini Service for Frontend
-        run: |
-          mkdir -p services
-          cat > services/geminiService.js << 'EOFSERVICE'
-          export async function askGemini(question) {
-            const response = await fetch("/api/gemini", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ question }),
-            });
-          
-            if (!response.ok) {
-              throw new Error("Gemini API error");
+            const { question } = req.body;
+
+            if (!question) {
+              return res.status(400).json({ error: "Missing question" });
             }
-          
-            const data = await response.json();
-            return data.response;
+
+            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+            const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+            const result = await model.generateContent(question);
+            const text = result.response.text();
+
+            return res.status(200).json({ response: text });
+          } catch (err) {
+            console.error("API ERROR:", err);
+            return res.status(500).json({ error: "Internal Server Error" });
           }
-          EOFSERVICE
+        }
+        EOFAPI
 
-      - name: Generate vercel.json
-        run: |
-          cat > vercel.json << 'EOFVERCEL'
-          {
-            "version": 2,
-            "builds": [
-              { "src": "api/*.js", "use": "@vercel/node" },
-              { "src": "index.html", "use": "@vercel/static" }
-            ],
-            "routes": [
-              { "src": "/api/(.*)", "dest": "/api/$1.js" },
-              { "src": "/(.*)", "dest": "/index.html" }
-            ]
+    - name: Patch Frontend Gemini Service
+      run: |
+        mkdir -p services
+        cat > services/geminiService.js << 'EOFSERVICE'
+        export async function askGemini(question) {
+          const res = await fetch("/api/gemini", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question })
+          });
+
+          if (!res.ok) {
+            throw new Error("Gemini API Error");
           }
-          EOFVERCEL
 
-      ######################################################################
-      # 2. INSTALL DEPENDENCIES & BUILD
-      ######################################################################
+          const data = await res.json();
+          return data.response;
+        }
+        EOFSERVICE
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
+    - name: Generate vercel.json
+      run: |
+        cat > vercel.json << 'EOFVERCEL'
+        {
+          "version": 2,
+          "routes": [
+            { "src": "/api/(.*)", "dest": "/api/$1.js" }
+          ]
+        }
+        EOFVERCEL
 
-      - name: Build project
-        run: npm run build
+    ######################################################################
+    # 2. INSTALL DEPENDENCIES (IGNORE STRICT PEER DEPENDENCIES)
+    ######################################################################
 
-      ######################################################################
-      # 3. DEPLOY TO VERCEL
-      ######################################################################
+    - name: Install dependencies
+      run: npm install --legacy-peer-deps
 
-      - name: Deploy to Vercel
-        run: |
-          npm install -g vercel@latest
-          vercel deploy --prod \
-            --token ${{ secrets.VERCEL_TOKEN }} \
-            --yes
+    ######################################################################
+    # 3. BUILD THE PROJECT
+    ######################################################################
 
+    - name: Build project
+      run: npm run build
+
+    ######################################################################
+    # 4. DEPLOY TO VERCEL
+    ######################################################################
+
+    - name: Install Vercel CLI
+      run: npm install -g vercel@latest
+
+    - name: Deploy to Vercel
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      run: vercel deploy --prod --token "$VERCEL_TOKEN" --yes
