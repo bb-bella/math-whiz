@@ -1,5 +1,5 @@
 {
-  "name": "math-whiz-app",
+  "name": "math-whiz-isabella",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "env": {
